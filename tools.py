@@ -184,3 +184,6 @@ def validate_email_tool(email: str) -> str:
     return json.dumps(result)
 
 ALL_TOOLS = [validate_name_tool, validate_phone_tool, validate_email_tool]
+
+
+
