@@ -1,0 +1,3 @@
+__pycache__/
+.env
+chatbot_app.log

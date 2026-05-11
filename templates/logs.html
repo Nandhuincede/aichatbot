@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Logs — Incede Technology</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a2463; --paper: #f0f4ff; --accent: #f97316; --accent2: #1e40af;
+    --muted: #4a6fa5; --border: rgba(10,36,99,0.1);
+    --font-display: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #ffffff; color: var(--ink); min-height: 100vh; }
+
+  nav { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 68px; background: var(--ink); }
+  .nav-logo { font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-back { font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); background: var(--paper); border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+  .nav-back:hover { background: #fff; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 48px 32px; }
+  .page-header { margin-bottom: 32px; }
+  .page-eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .page-title { font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; }
+  .page-sub { font-size: 0.9rem; color: var(--muted); margin-top: 6px; }
+
+  /* STATS */
+  .stats-bar { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .stat-card { background: var(--ink); color: #fff; border-radius: 12px; padding: 16px 22px; min-width: 130px; }
+  .stat-card-num { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; }
+  .stat-card-label { font-size: 0.68rem; color: rgba(255,255,255,0.5); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 200px; position: relative; }
+  .search-box input { width: 100%; padding: 9px 14px 9px 36px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 0.85rem; background: #fff; outline: none; transition: border-color 0.2s; }
+  .search-box input:focus { border-color: var(--accent2); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .filter-select { padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 0.85rem; background: #fff; outline: none; cursor: pointer; }
+  .refresh-btn { padding: 9px 16px; background: var(--ink); color: #fff; border: none; border-radius: 10px; font-family: var(--font-display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 6px; }
+  .refresh-btn:hover { background: var(--accent); }
+
+  /* ── TABLE ── */
+  .table-wrap { background: #fff; border-radius: 16px; border: 1px solid rgba(10,36,99,0.15); overflow: hidden; box-shadow: 0 4px 24px rgba(10,36,99,0.07); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--ink); }
+  thead th { padding: 14px 16px; text-align: left; font-family: var(--font-display); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); white-space: nowrap; }
+  thead th:first-child { border-radius: 0; }
+  tbody tr { border-bottom: 1px solid rgba(10,36,99,0.08); cursor: pointer; transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #e8f0fe; }
+  tbody td { padding: 14px 16px; font-size: 0.84rem; vertical-align: middle; }
+
+  .td-num { font-family: var(--font-display); font-weight: 700; color: rgba(10,36,99,0.3); font-size: 0.8rem; }
+  .td-name { font-weight: 600; }
+  .td-name.anon { color: var(--muted); font-weight: 400; font-style: italic; }
+  .td-mono { font-family: monospace; font-size: 0.78rem; color: var(--muted); }
+  .td-id { font-family: monospace; font-size: 0.68rem; color: rgba(10,36,99,0.3); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .td-date { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; }
+  .badge-complete { background: rgba(74,222,128,0.15); color: #15803d; }
+  .badge-active { background: rgba(45,107,255,0.12); color: var(--accent2); }
+  .badge-partial { background: rgba(251,191,36,0.15); color: #b45309; }
+
+  .view-btn { font-size: 0.72rem; font-weight: 700; color: var(--ink); background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: all 0.15s; font-family: var(--font-display); letter-spacing: 0.04em; white-space: nowrap; }
+  .view-btn:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* PAGINATION */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-top: 1px solid var(--border); background: #fff; border-radius: 0 0 16px 16px; flex-wrap: wrap; gap: 10px; }
+  .pg-info { font-size: 0.78rem; color: var(--muted); }
+  .pg-controls { display: flex; gap: 6px; align-items: center; }
+  .pg-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-family: var(--font-display); font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .pg-btn:hover:not(:disabled) { border-color: var(--ink); background: var(--ink); color: #fff; }
+  .pg-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .pg-btn.nav { width: auto; padding: 0 12px; gap: 4px; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
+  .empty-sub { font-size: 0.85rem; margin-top: 6px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .modal-overlay.visible { opacity: 1; pointer-events: all; }
+  .modal { background: #fff; border-radius: 20px; width: 100%; max-width: 700px; max-height: 88vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.25); transform: scale(0.95); transition: transform 0.25s; }
+  .modal-overlay.visible .modal { transform: scale(1); }
+
+  .modal-header { position: sticky; top: 0; z-index: 10; background: var(--ink); padding: 20px 24px; border-radius: 20px 20px 0 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .modal-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: #fff; }
+  .modal-sub { font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: 3px; font-family: monospace; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem; transition: background 0.2s; }
+  .modal-close:hover { background: rgba(249,115,22,0.6); }
+
+  .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+  .modal-section-title { font-family: var(--font-display); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .modal-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Contact grid in modal */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .contact-item { background: #f0f4ff; border: 1px solid rgba(10,36,99,0.12); border-radius: 10px; padding: 12px 14px; }
+  .contact-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .contact-value { font-size: 0.88rem; font-weight: 500; margin-top: 3px; word-break: break-all; }
+
+  /* Conversation in modal */
+  .convo-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+  .convo-msg { display: flex; gap: 8px; }
+  .convo-msg.user { flex-direction: row-reverse; }
+  .convo-role { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.58rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+  .convo-msg.bot .convo-role { background: #0a2463; color: #f0f0f0; }
+  .convo-msg.user .convo-role { background: var(--accent); color: #fff; }
+  .convo-text-wrap { max-width: 78%; }
+  .convo-text { background: #f4f4f4; border-radius: 12px; padding: 7px 11px; font-size: 0.79rem; line-height: 1.5; }
+  .convo-msg.user .convo-text { background: var(--accent); color: #fff; }
+  .convo-time { font-size: 0.58rem; color: var(--muted); margin-top: 2px; }
+  .convo-msg.user .convo-time { text-align: right; }
+
+  /* Errors in modal */
+  .error-list { display: flex; flex-direction: column; gap: 8px; }
+  .error-item { background: rgba(249,115,22,0.06); border: 1px solid rgba(249,115,22,0.2); border-radius: 10px; padding: 12px 14px; }
+  .error-type { font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+  .error-msg { font-size: 0.78rem; margin-top: 4px; font-family: monospace; word-break: break-all; }
+  .error-time { font-size: 0.62rem; color: var(--muted); margin-top: 4px; }
+  .no-data { color: var(--muted); font-size: 0.82rem; font-style: italic; }
+
+  @media(max-width:768px){
+    .page{padding:24px 14px}
+    nav{padding:0 16px}
+    .contact-grid{grid-template-columns:1fr}
+    thead th:nth-child(4), tbody td:nth-child(4),
+    thead th:nth-child(5), tbody td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">●&nbsp;Incede<span>&nbsp;Technology</span></a>
+  <a href="/" class="nav-back">← Back to Home</a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-eyebrow">Admin Panel</div>
+    <h1 class="page-title">Session Logs</h1>
+    <p class="page-sub">All chatbot conversations. Click any row to view full details.</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-card-num" id="stat-total">—</div><div class="stat-card-label">Total Sessions</div></div>
+    <div class="stat-card" style="background:var(--accent)"><div class="stat-card-num" id="stat-complete">—</div><div class="stat-card-label">Completed</div></div>
+    <div class="stat-card" style="background:var(--accent2)"><div class="stat-card-num" id="stat-today">—</div><div class="stat-card-label">Today</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search by name, phone, email…" oninput="handleSearch()"/>
+    </div>
+    <select class="filter-select" id="status-filter" onchange="loadSessions(1)">
+      <option value="">All statuses</option>
+      <option value="completed">Completed</option>
+      <option value="active">Active / Partial</option>
+    </select>
+    <button class="refresh-btn" onclick="loadSessions(currentPage)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap" id="table-wrap">
+    <table id="sessions-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="sessions-body">
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Loading sessions…</td></tr>
+      </tbody>
+    </table>
+    <div class="pagination" id="pagination" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Session Details</div>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">X</button>
+    </div>
+    <div class="modal-body" id="modal-body"><p style="color:var(--muted);text-align:center;padding:40px">Loading…</p></div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+  let totalPages = 1;
+  let allSessionsCache = [];
+  let searchTimer = null;
+
+  // ── IST Time Helpers ──
+  // Timestamps from DB are already in IST (stored as "YYYY-MM-DD HH:MM:SS" IST).
+  // Parsing them with new Date() treats them as local time — so we display directly.
+  function parseIST(ts) {
+    if (!ts) return null;
+    // Replace space with T to make it ISO-compatible; add IST offset so browser
+    // doesn't shift it to local time.
+    return new Date(ts.replace(' ', 'T') + '+05:30');
+  }
+  function fmtDate(ts) {
+    const d = parseIST(ts);
+    if (!d || isNaN(d)) return ts || '—';
+    return d.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    }) + ' IST';
+  }
+  function fmtTime(ts) {
+    const d = parseIST(ts);
+    if (!d || isNaN(d)) return ts || '';
+    return d.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    }) + ' IST';
+  }
+
+  // ── Load Sessions ──
+
+  async function loadSessions(page = 1) {
+    currentPage = page;
+    const perPage = 10;
+    const status = document.getElementById('status-filter').value;
+    const search = document.getElementById('search-input').value.trim();
+
+    try {
+      let url = `/api/logs/sessions?page=${page}&per_page=${perPage}`;
+      if (status) url += `&status=${status}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      totalPages = data.total_pages || 1;
+      allSessionsCache = data.sessions || [];
+
+      updateStats(data);
+      renderTable(data.sessions, data.total, page, perPage);
+      renderPagination(page, data.total_pages, data.total, perPage);
+
+    } catch (e) {
+      document.getElementById('sessions-body').innerHTML =
+        `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--accent)">Failed to load sessions. Is the server running?</td></tr>`;
+    }
+  }
+
+  function updateStats(data) {
+    document.getElementById('stat-total').textContent = data.total_all ?? data.total ?? 0;
+    document.getElementById('stat-complete').textContent = data.completed_count ?? 0;
+    document.getElementById('stat-today').textContent = data.today_count ?? 0;
+  }
+
+  // ── Render Table ──
+
+  function renderTable(sessions, total, page, perPage) {
+    const tbody = document.getElementById('sessions-body');
+
+    if (!sessions || sessions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8">
+        <div class="empty-state">
+          <div class="empty-icon"></div>
+          <div class="empty-title">No sessions found</div>
+          <div class="empty-sub">Start a conversation on the home page.</div>
+        </div>
+      </td></tr>`;
+      document.getElementById('pagination').style.display = 'none';
+      return;
+    }
+
+    const offset = (page - 1) * perPage;
+    tbody.innerHTML = sessions.map((s, i) => {
+      const rowNum = total - offset - i;
+      const status = s.status === 'completed' ? 'complete' : (s.name ? 'partial' : 'active');
+      const statusLabel = s.status === 'completed' ? 'Completed' : (s.name ? 'Partial' : 'Active');
+      const date = fmtDate(s.created_at);
+
+      return `<tr onclick="openModal('${s.session_id}')">
+        <td class="td-num">${String(rowNum).padStart(2,'0')}</td>
+        <td class="td-name ${s.name ? '' : 'anon'}">${s.name || 'Anonymous'}</td>
+        <td class="td-mono">${s.phone || '<span style="color:var(--muted);font-style:italic;font-size:0.75rem">—</span>'}</td>
+        <td class="td-mono">${s.email || '<span style="color:var(--muted);font-style:italic;font-size:0.75rem">—</span>'}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem;color:var(--muted)">${s.description || '—'}</td>
+        <td><span class="badge badge-${status}">${statusLabel}</span></td>
+        <td class="td-date">${date}</td>
+        <td onclick="event.stopPropagation()">
+          <button class="view-btn" onclick="openModal('${s.session_id}')">View →</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('pagination').style.display = totalPages > 1 ? 'flex' : 'none';
+  }
+
+  // ── Pagination ──
+
+  function renderPagination(page, total_pages, total, per_page) {
+    const pg = document.getElementById('pagination');
+    if (!total_pages || total_pages <= 1) { pg.style.display = 'none'; return; }
+
+    const from = (page - 1) * per_page + 1;
+    const to = Math.min(page * per_page, total);
+
+    const range = new Set([1, total_pages, page, page - 1, page + 1].filter(p => p >= 1 && p <= total_pages));
+    const sorted = [...range].sort((a, b) => a - b);
+
+    let pageButtons = '';
+    let prev = null;
+    for (const p of sorted) {
+      if (prev && p - prev > 1) pageButtons += `<span class="pg-btn" style="border:none;cursor:default;opacity:0.4">…</span>`;
+      pageButtons += `<button class="pg-btn ${p === page ? 'active' : ''}" onclick="loadSessions(${p})">${p}</button>`;
+      prev = p;
+    }
+
+    pg.style.display = 'flex';
+    pg.innerHTML = `
+      <div class="pg-info">Showing ${from}–${to} of ${total} sessions</div>
+      <div class="pg-controls">
+        <button class="pg-btn nav" onclick="loadSessions(${page - 1})" ${page <= 1 ? 'disabled' : ''}>← Prev</button>
+        ${pageButtons}
+        <button class="pg-btn nav" onclick="loadSessions(${page + 1})" ${page >= total_pages ? 'disabled' : ''}>Next →</button>
+      </div>`;
+  }
+
+  // ── Search ──
+
+  function handleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadSessions(1), 350);
+  }
+
+  // ── Modal ──
+
+  async function openModal(sessionId) {
+    document.getElementById('modal-overlay').classList.add('visible');
+    document.getElementById('modal-title').textContent = 'Loading…';
+    document.getElementById('modal-sub').textContent = sessionId;
+    document.getElementById('modal-body').innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Loading session data…</p>';
+
+    try {
+      const res = await fetch(`/api/logs/session/${sessionId}`);
+      const data = await res.json();
+      const { session, contact, conversation, errors } = data;
+
+      document.getElementById('modal-title').textContent = contact.name ? `${contact.name}'s Session` : 'Session Details';
+
+      const contactHtml = `<div>
+        <div class="modal-section-title">Contact Information</div>
+        <div class="contact-grid">
+          <div class="contact-item"><div class="contact-label">Name</div><div class="contact-value">${contact.name || '—'}</div></div>
+          <div class="contact-item"><div class="contact-label">Phone</div><div class="contact-value">${contact.phone || '—'}</div></div>
+          <div class="contact-item"><div class="contact-label">Email</div><div class="contact-value">${contact.email || '—'}</div></div>
+          <div class="contact-item"><div class="contact-label">Description</div><div class="contact-value">${contact.description || '—'}</div></div>
+        </div>
+      </div>`;
+
+      const convHtml = conversation.length
+        ? conversation.map(m => `
+          <div class="convo-msg ${m.role}">
+            <div class="convo-role">${m.role === 'bot' ? 'AI' : 'Me'}</div>
+            <div class="convo-text-wrap">
+              <div class="convo-text">${m.message.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>
+              <div class="convo-time">${fmtTime(m.timestamp)} · ${m.step || ''}</div>
+            </div>
+          </div>`).join('')
+        : '<p class="no-data">No conversation messages recorded.</p>';
+
+      const errHtml = errors.length
+        ? errors.map(e => `
+          <div class="error-item">
+            <div class="error-type">${e.error_type}</div>
+            <div class="error-msg">${e.error_message}</div>
+            <div class="error-time">${fmtDate(e.timestamp)}</div>
+          </div>`).join('')
+        : '<p class="no-data">No errors recorded.</p>';
+
+      const status = session.status === 'completed'
+        ? '<span class="badge badge-complete">Completed</span>'
+        : '<span class="badge badge-partial">Incomplete</span>';
+
+      document.getElementById('modal-body').innerHTML = `
+        ${contactHtml}
+        <div>
+          <div class="modal-section-title">Conversation (${conversation.length} messages)</div>
+          <div class="convo-list">${convHtml}</div>
+        </div>
+        <div>
+          <div class="modal-section-title">Error Log (${errors.length})</div>
+          <div class="error-list">${errHtml}</div>
+        </div>
+        <div>
+          <div class="modal-section-title">Session Metadata</div>
+          <div class="contact-grid">
+            <div class="contact-item"><div class="contact-label">Status</div><div class="contact-value" style="margin-top:6px">${status}</div></div>
+            <div class="contact-item"><div class="contact-label">Session ID</div><div class="contact-value" style="font-size:0.68rem;font-family:monospace">${sessionId}</div></div>
+            <div class="contact-item"><div class="contact-label">Created</div><div class="contact-value" style="font-size:0.8rem">${fmtDate(session.created_at)}</div></div>
+            <div class="contact-item"><div class="contact-label">Last Updated</div><div class="contact-value" style="font-size:0.8rem">${fmtDate(session.updated_at)}</div></div>
+          </div>
+        </div>`;
+
+    } catch (e) {
+      document.getElementById('modal-body').innerHTML = '<p style="color:var(--accent);padding:20px">Failed to load session details.</p>';
+    }
+  }
+
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('visible'); }
+  function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  loadSessions(1);
+</script>
+</body>
+</html>
